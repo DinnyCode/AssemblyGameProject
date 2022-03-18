@@ -1,64 +1,69 @@
     ORG    $1000
 START:
-    BSR TEST
     BSR SETUP
     BSR WELCOME
-    BRA GAME_LOOP
+    BSR GAME_LOOP
 
+**********************
+*MAIN GAME SUBROUTINES
+**********************
 SETUP:
     *DECLARE VARIABLES AND SETUP GAME
     LEA SETUP_MSG, A1
-    MOVE.B #13, D0
-    TRAP #15
+    
+    BSR PRINT_MSG
+    
+    BSR CLEAR_PROMPT
     
     *DECLARING VARAIBLES
     
     *STARTING VARAIBLES
-    MOVE.B #100, CARBON_AMOUNT          STARTING CARBON LEVEL
-    MOVE.B #100, MONEY                  STARTING MONEY
-    MOVE.B #0, TICK_COUNT               STARTING TICK
+    MOVE.W #100, CARBON_AMOUNT          STARTING CARBON LEVEL
+    MOVE.W #100, MONEY                  STARTING MONEY
+    MOVE.W #0, TICK_COUNT               STARTING TICK
 
     *END GAME VARIABLES
-    MOVE.B #200, TICK_DEADLINE          DEADLINE TO REDUCE CARBON
+    MOVE.W #200, TICK_DEADLINE          DEADLINE TO REDUCE CARBON
 
     *STRUCTURE STARTING COUNTS
-    MOVE.B #0, TREE_COUNT               TOTAL NO. TREES
-    MOVE.B #0, WINDMILL_COUNT           TOTAL NO. WINDMILLS
-    MOVE.B #0, SOLAR_PANEL_COUNT        TOTAL NO. SOLAR PANELS
+    MOVE.W #0, TREE_COUNT               TOTAL NO. TREES
+    MOVE.W #0, WINDMILL_COUNT           TOTAL NO. WINDMILLS
+    MOVE.W #0, SOLAR_PANEL_COUNT        TOTAL NO. SOLAR PANELS
     
     *STRUCTURE COSTS
-    MOVE.B #2, TREE_COST                COST OF TREE
-    MOVE.B #5, WINDMILL_COST            COST OF WINDMILLS
-    MOVE.B #10, SOLAR_PANEL_COST        COST OF SOLAR PANEL
+    MOVE.W #2, TREE_COST                COST OF TREE
+    MOVE.W #5, WINDMILL_COST            COST OF WINDMILLS
+    MOVE.W #10, SOLAR_PANEL_COST        COST OF SOLAR PANEL
     
     *REDUCTION VARIABLES
-    MOVE.B #0, TREE_REDUCTION           REDUCTION VALUE OF TREES
-    MOVE.B #0, WINDMILL_REDUCTION       REDUCTION VALUE OF WINDMILLS
-    MOVE.B #0, SOLAR_PANEL_REDUCTION    REDUCTION VALUE OF SOLAR PANELS
+    MOVE.W #2, TREE_REDUCTION           REDUCTION VALUE OF TREES
+    MOVE.W #5, WINDMILL_REDUCTION       REDUCTION VALUE OF WINDMILLS
+    MOVE.W #10, SOLAR_PANEL_REDUCTION    REDUCTION VALUE OF SOLAR PANELS
     
     *CALCUALTION VARIABLES
-    MOVE.B #0, CARON_REDUCTION          RATE CARBON REDUCES BY
-    MOVE.B #0, CARBON_INCREASE_RATE     RATE CARBON INCREASES 
+    MOVE.W #0, CARON_REDUCTION          RATE CARBON REDUCES BY
+    MOVE.W #0, CARBON_INCREASE_RATE     RATE CARBON INCREASES 
 
     RTS
 
 WELCOME:
     *WELCOMES USER AND INTRODUCES TO GAME
-    LEA GAME_TITLE, A1
-    MOVE.B #13, D0
-    TRAP #15
+    
+    LEA GAME_TITLE, A1                  TITLE SCREEN MESSAGE
+    BSR PRINT_MSG
+    BSR CLEAR_PROMPT
        
-    LEA WELCOME_MSG, A1
-    MOVE.B #13, D0
-    TRAP #15
+    LEA WELCOME_MSG, A1                 INTRODUCTION TO GAME
+    BSR PRINT_MSG
+    BSR CLEAR_PROMPT
     
     RTS
     
 GAME_LOOP:
     *MAIN GAME LOOP
     LEA GAME_LOOP_MSG, A1
-    MOVE.B #13, D0
-    TRAP #15
+    BSR PRINT_MSG
+    BSR CLEAR_PROMPT
     
     BSR GAME_STATE
     BSR INPUT
@@ -68,24 +73,23 @@ GAME_LOOP:
     BSR UPDATE_CARBON
     BSR UPDATE_TICK
     
-    BRA WIN_STATUS
+    BSR WIN_STATUS
 
 GAME_STATE:
     *OUPUTS STATE OF GAME
     LEA GAME_STATE_MSG, A1
-    MOVE.B #13, D0
-    TRAP #15
+    BSR PRINT_MSG
+    
+    BSR CLEAR_PROMPT
     
     RTS
     
 INPUT:
     *PROMPTS USER FOR INPUT TO GO TO SHOP OR SKIP TURN
     LEA INPUT_MSG, A1
-    MOVE.B #13, D0
-    TRAP #15
+    BSR PRINT_MSG
     
-    MOVE.B #4, D0
-    TRAP #15
+    BSR INPUT_PROMPT
     
     CMP #1, D1
     BEQ SHOP
@@ -93,13 +97,17 @@ INPUT:
     RTS
         
 SHOP:
-    *ALLOWS UER TO BUY STRUCTURES
-    LEA SHOP_INPUT_MSG, A1
-    MOVE.B #13, D0
-    TRAP #15
+    *ALLOWS USER TO BUY STRUCTURES
+    BSR CLEAR_SCREEN
     
-    MOVE.B #4, D0
-    TRAP #15
+    LEA SHOP_ART, A1
+    BSR PRINT_MSG
+    BSR CLEAR_PROMPT
+    
+    LEA SHOP_INPUT_MSG, A1
+    BSR PRINT_MSG
+    
+    BSR INPUT_PROMPT
     
     CMP #1, D1
     BEQ PLANT_TREE
@@ -111,98 +119,172 @@ SHOP:
     BEQ BUILD_SOLAR_PANEL
     
     CMP #4, D1
+    
     RTS
     
 PLANT_TREE:
     *PLANTS TREE STRUCTURE
-    LEA PLANT_TREE_MSG, A1
-    MOVE.B #13, D0
-    TRAP #15
+    BSR CLEAR_SCREEN
     
-    ADD #1, D5 
+    LEA TREE_ART, A1
+    BSR PRINT_MSG
+    BSR CLEAR_PROMPT
+    
+    LEA PLANT_TREE_MSG, A1
+    BSR PRINT_MSG
+    BSR CLEAR_PROMPT
+    
+    ADD #1, TREE_COUNT                         ADDING TO TREE COUNT
+    
     BSR LOCATION
+    
+    RTS
     
 BUILD_WINDMILL:
     *BUILDS WINDMILL STRUCTURE 
+    BSR CLEAR_SCREEN
+    
+    LEA WINDMILL_ART, A1
+    BSR PRINT_MSG
+    BSR CLEAR_PROMPT
+    
     LEA BUILD_WINDMILL_MSG, A1
-    MOVE.B #13, D0
-    TRAP #15
+    BSR PRINT_MSG
+    BSR CLEAR_PROMPT
+    
+    ADD #1,(WINDMILL_COUNT)
     
     BSR LOCATION
+    
+    RTS
 
 BUILD_SOLAR_PANEL:
-    *BUILDS SOLAR PANEL STRUCTURE
+    *BUILDS SOLAR PANEL STRUCTURE    
+    BSR CLEAR_SCREEN
+    
+    LEA SOLAR_PANEL_ART, A1
+    BSR PRINT_MSG
+    BSR CLEAR_PROMPT
+    
     LEA BUILD_SOLAR_PANEL_MSG, A1
-    MOVE.B #13, D0
-    TRAP #15
+    BSR PRINT_MSG
+    BSR CLEAR_PROMPT
+    
+    ADD #1,(SOLAR_PANEL_COUNT)
     
     BSR LOCATION
+    
+    RTS
     
 LOCATION:
     *ALLOWS USER TO CHOOSE WHERE TO BUILD STRUCTURE
     LEA LOCATION_MSG, A1
-    MOVE.B #13, D0
-    TRAP #15
+    BSR PRINT_MSG
         
-    BRA UPDATE_INV
+    BSR CLEAR_PROMPT
+    
+    BSR UPDATE_INV
+    
+    RTS
     
 UPDATE_INV:
     *UPDATES INVENTORY OF USER
     LEA UPDATE_INV_MSG, A1
-    MOVE.B #13, D0
-    TRAP #15
+    BSR PRINT_MSG
     
+    
+    *TREE COUNT OUTPUT
     LEA UPDATE_TREE_MSG, A1
-    MOVE.B #14, D0
-    TRAP #15
+    BSR PRINT_MSG_ALT
     
-    *trap 6 or 3
-    MOVE.B D5, D1
-    MOVE.B #3, D0
-    TRAP #15
+    LEA TREE_COUNT, A1
+    BSR PRINT_NUM
     
-    MOVE.B D1, D5
+    *WINDMILL COUNT OUTPUT
+    
+    *SOLAR PANEL COUNT OUTPUT
+    
+    BSR CLEAR_PROMPT
     
     RTS
-
 
 CHECK_STATS:
     *CHECKS CURRENT STATS & VALUES OF GAME
     LEA CHECK_STATS_MSG, A1
-    MOVE.B #13, D0
-    TRAP #15
+    BSR PRINT_MSG
+    
+    BSR CLEAR_PROMPT
     
     RTS
 
 CALCULATE_REDUCTION:
     *CALCULATE CARBON REDUCTION AMOUNT
     LEA CALCULATE_REDUCTION_MSG, A1
-    MOVE.B #13, D0
-    TRAP #15
+    BSR PRINT_MSG
+    
+    *TREE REDUCTION
+    LEA TREE_COUNT, A4
+    LEA TREE_REDUCTION, A5
+    
+    MOVE.W (A4),D4
+    MOVE.W (A5),D5
+    
+    MULU D4,D5
+    
+    
+    ADD D5, D6                  ADDING TO TOTAL REDUCTION
+    
+    
+    *WINDMILL REDUCTION
+    
+    *SOLAR PANEL REDUCTION
+    
+    *TOTAL REDUCTION
+    
+    BSR CLEAR_PROMPT
     
     RTS
 
 UPDATE_CARBON:
     *UPDATES CARON AMOUNT
+    
+    *REDUCTION OF CARBON
+    LEA CARBON_AMOUNT, A7
+    MOVE.W (A7),D7
+
+    SUB D6, D7
+    
+    *OUTPUT NEW CARBON AMOUNT
     LEA UPDATE_CARBON_MSG, A1
+    BSR PRINT_MSG_ALT
+    
+    MOVE.W D7,D1
+    MOVE.B #3, D0
+    TRAP #15
+    
+    LEA NEW_LINE, A1
     MOVE.B #13, D0
     TRAP #15
+    
+    BSR CLEAR_PROMPT
     
     RTS
 
 UPDATE_TICK:
     *UPDATES TICK FOR TURN PASSED
     LEA UPDATE_TICK_MSG, A1
-    MOVE.B #13, D0
-    TRAP #15
+    BSR PRINT_MSG
+    
+    BSR CLEAR_PROMPT
     
     RTS
 
 WIN_STATUS
     *CHECKS IF WIN OR LOSS STATUS HAS BEEN MET
     LEA WIN_STATUS_MSG, A1
-    MOVE.B #13, D0
-    TRAP #15
+    BSR PRINT_MSG
+    
+    BSR CLEAR_PROMPT
 
     *CHECK WIN STATUS(CMP RELEVANT VALS)
     
@@ -217,13 +299,14 @@ WIN_STATUS
     
 EVENT_STATUS:
     LEA EVENT_STATUS_MSG, A1
-    MOVE.B #13, D0
-    TRAP #15
+    BSR PRINT_MSG
+    
+    BSR CLEAR_PROMPT
     
     *IF COMPARISONS COME BACK TRUE, GO TO RELEVANT SR
     
     *ELSE
-    BRA GAME_LOOP
+    BSR GAME_LOOP
 
 
 *******************
@@ -237,54 +320,68 @@ EVENT_STATUS:
 VICTORY:
     *USER HAS WON GAME
     LEA VICTORY_MSG, A1
-    MOVE.B #13, D0
-    TRAP #15
+    BSR PRINT_MSG
     
-    BRA FINAL_STATS
+    BSR CLEAR_PROMPT
+    
+    BSR FINAL_STATS
 
 LOSS:
     *USER HAS LOST GAME
     LEA LOSS_MSG, A1
-    MOVE.B #13, D0
-    TRAP #15
+    BSR PRINT_MSG
     
-    BRA FINAL_STATS
+    BSR CLEAR_PROMPT
+    
+    BSR FINAL_STATS
 
 FINAL_STATS:
     *OUTPUTS FINAL STATS OF USER
     LEA FINAL_STATS_MSG, A1
-    MOVE.B #13, D0
-    TRAP #15
+    BSR PRINT_MSG
     
-    BRA REPLAY
+    BSR CLEAR_PROMPT
+    
+    BSR REPLAY
     
 REPLAY: 
     *PROMPTS USER TO REPLAY OR EXIT GAME
     LEA REPLAY_MSG, A1
-    MOVE.B #13, D0
-    TRAP #15
+    BSR PRINT_MSG
     
-    MOVE.B #4, D0
-    TRAP #15
+    BSR CLEAR_PROMPT
+    
+    BSR INPUT_PROMPT
     
     CMP #1, D1
     BEQ START
     
-    BRA EXIT
+    BSR EXIT
     
 ********************
 *FORMATTING AND
 *OUTPUT SUB ROUTINES
 ********************
-INVALID_OPTION:
-    *INVALID OPTION HAS BEEN ENTERED
-    LEA INVALID_OPTION_MSG, A1
-    MOVE.B #13, D0
+INPUT_PROMPT:
+    LEA INPUT_SYMBOL, A1
+    MOVE.L #14, D0
     TRAP #15
     
-    *COMPARES VALUE IN CERTAIN REGISTER TO DETERMINE WHICH SUB ROUTINE TO RETURN TO 
+    MOVE.B #4, D0
+    TRAP #15
+    
+    RTS
 
 CLEAR_SCREEN:
+    MOVE #11, D0
+    MOVE.W #$FF00, D1
+    TRAP #15
+    
+    MOVE.W #0, D1
+    
+    RTS
+
+CLEAR_PROMPT:
     *SR TO CLEAR SCREEN
     
     LEA CONTINUE_MSG,A1
@@ -302,6 +399,37 @@ CLEAR_SCREEN:
     MOVE.W #0, D1
     
     RTS
+    
+PRINT_MSG:
+    MOVE.B #13, D0
+    TRAP #15
+    
+    RTS
+    
+PRINT_MSG_ALT:
+    MOVE.B #14, D0
+    TRAP #15
+    
+    RTS
+    
+PRINT_NUM:
+    MOVE.W (A1),D1
+    MOVE.B #3, D0
+    TRAP #15
+    
+    LEA NEW_LINE, A1
+    MOVE.B #13, D0
+    TRAP #15
+    
+    RTS
+        
+INVALID_OPTION:
+    *INVALID OPTION HAS BEEN ENTERED
+    LEA INVALID_OPTION_MSG, A1
+    MOVE.B #13, D0
+    TRAP #15
+    
+    *COMPARES VALUE IN CERTAIN REGISTER TO DETERMINE WHICH SUB ROUTINE TO RETURN TO 
         
 TEST:
     *SUB ROUTINE FOR TESTING
@@ -317,8 +445,9 @@ TEST:
 EXIT:
     *EXITS GAME
     LEA EXIT_MSG, A1
-    MOVE.B #13, D0
-    TRAP #15
+    BSR PRINT_MSG
+    
+    BSR CLEAR_PROMPT
                     
     SIMHALT   
         
@@ -329,8 +458,6 @@ EXIT:
 ****************
 *OUTPUT MESSAGES
 ****************
-    
-CRLF DC.B $0D,$0A,0
 
 *GAME START AND SETUP MESSAGES
 GAME_TITLE DC.B '::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::'
@@ -367,9 +494,119 @@ GAME_TITLE DC.B ':::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
            DC.B $0D,$0A
            DC.B ':::::......:::..:::::..:::.......::::......:::..:::::..::........::..:::::..::::'
            DC.B $0D,$0A
+           DC.B '::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::',0           
+
+
+SHOP_ART   DC.B '::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::'
+			DC.B $0D,$0A
+			DC.B '::::::::::::##::::::::::::::::##:::::::::::::::::##::::::::::::::::##:::::::::::'
+			DC.B $0D,$0A
+			DC.B ':::::::: ########::::::::: ########:::::::::: ########::::::::: ########::::::::'
+			DC.B $0D,$0A
+			DC.B '::::::: ##. ##. ##::::::: ##. ##. ##:::::::: ##. ##. ##::::::: ##. ##. ##:::::::'
+			DC.B $0D,$0A
+			DC.B '::::::::##: ##:..:::::::: ##: ##:..::::::::::##: ##:..:::::::: ##: ##:..::::::::'
+			DC.B $0D,$0A
+			DC.B ':::::::. ########::::::::. ########:::::::::. ########::::::::. ########::::::::'
+			DC.B $0D,$0A
+			DC.B '::::::::... ##. ##::::::::... ##. ##:::::::::... ##. ##::::::::... ##. ##:::::::'
+			DC.B $0D,$0A
+			DC.B '::::::: ##: ##: ##::::::: ##: ##: ##:::::::: ##: ##: ##::::::: ##: ##: ##:::::::'
+			DC.B $0D,$0A
+			DC.B ':::::::. ########::::::::. ########:::::::::. ########::::::::. ########::::::::'
+			DC.B $0D,$0A
+			DC.B '::::::::....##..::::::::::....##..:::::::::::....##..::::::::::....##..:::::::::'
+			DC.B $0D,$0A
+			DC.B '::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::'
+			DC.B '::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::'
+			DC.B $0D,$0A
+			DC.B '::::::::::::##::::::::::::::::##:::::::::::::::::##::::::::::::::::##:::::::::::'
+			DC.B $0D,$0A
+			DC.B ':::::::: ########::::::::: ########:::::::::: ########::::::::: ########::::::::'
+			DC.B $0D,$0A
+			DC.B '::::::: ##. ##. ##::::::: ##. ##. ##:::::::: ##. ##. ##::::::: ##. ##. ##:::::::'
+			DC.B $0D,$0A
+			DC.B '::::::::##: ##:..:::::::: ##: ##:..::::::::::##: ##:..:::::::: ##: ##:..::::::::'
+			DC.B $0D,$0A
+			DC.B ':::::::. ########::::::::. ########:::::::::. ########::::::::. ########::::::::'
+			DC.B $0D,$0A
+			DC.B '::::::::... ##. ##::::::::... ##. ##:::::::::... ##. ##::::::::... ##. ##:::::::'
+			DC.B $0D,$0A
+			DC.B '::::::: ##: ##: ##::::::: ##: ##: ##:::::::: ##: ##: ##::::::: ##: ##: ##:::::::'
+			DC.B $0D,$0A
+			DC.B ':::::::. ########::::::::. ########:::::::::. ########::::::::. ########::::::::'
+			DC.B $0D,$0A
+			DC.B '::::::::....##..::::::::::....##..:::::::::::....##..::::::::::....##..:::::::::'
+			DC.B $0D,$0A
+			DC.B '::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::',0
+
+TREE_ART   DC.B '::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::'
+           DC.B $0D,$0A
+           DC.B '::::::::::::::::::::::::::::::::::::::::.~::::::::::::::::::::::::::::::::::::::'
+           DC.B $0D,$0A
+           DC.B ':::::::::::::::::::::::::::::::::^!~~^^!J~?7:.:.^!!:::::::::::::::::::::::::::::'
+           DC.B $0D,$0A
+           DC.B ':::::::::::::::::::::::::::::::7!7~!^77~^^^!7Y7!?~J?::::::::::::::::::::::::::::'
+           DC.B $0D,$0A
+           DC.B ':::::::::::::::::::::::::::!~~!Y!^^^^^^^^^^^^^^^^^^7Y^~~::::::::::::::::::::::::'
+           DC.B $0D,$0A
+           DC.B '::::::::::::::::::::::::~!J7^~^^^^^^^^^^^^^^^^^^^^^^~~!J?:::::::::::::::::::::::'
+           DC.B $0D,$0A
+           DC.B ':::::::::::::::::::::::7J7^^^^::^^^^^^^^^^^^^^^^::^~^^^7J?::::::::::::::::::::::'
+           DC.B $0D,$0A
+           DC.B '::::::::::::::::::::~?!!J5~^^^^^^^^^^^^^^^^^^^^^^^~5?^^~!J7J^~::::::::::::::::::'
+           DC.B $0D,$0A
+           DC.B ':::::::::::::::::..~Y~^^^^^^^^?7~^^^:^^~~^^^^^!J??5?~^^^^:^~!?::::::::::::::::::'
+           DC.B $0D,$0A
+           DC.B '::::::::::::::::~Y!~~^^^^^^^^^!?Y77J!7!Y?^^^^^^^~~~^^^^^::^^7J.:::::::::::::::::'
+           DC.B $0D,$0A
+           DC.B '::::::::::::::~^J7^^??^^:^^^^^^^^^~!7!7!^^^^^^^^^^^^^^~~^^^^^?J^::::::::::::::::'
+           DC.B $0D,$0A
+           DC.B '::::::::::::?J~~^^^~?577~^^^^^^^^^^^:^^^^^^^^^^^^~^^^^^^^^^^^^~5^:::::::::::::::'
+           DC.B $0D,$0A
+           DC.B ':::::::::::::5!^^^^^~!?YYJ??~^^~^^^^^^^^^~^:^^^^^^^^^^^^^^^::~!J5!::::::::::::::'
+           DC.B $0D,$0A
+           DC.B ':::::::::::::~!?~~^^^^^^~~!!^^!5!^^^^^^^^^^^^!Y7^^^^^^!?~^^~!~YJ!?7^::::::::::::'
+           DC.B $0D,$0A
+           DC.B '::::::::::::::::Y7~^^^^^^^^^^^75JJ5?J7JGJ!~!Y?P!^^^^^^^?Y77JY7J~^!Y?::::::::::::'
+           DC.B $0D,$0A
+           DC.B ':::::::::::::::::YJ?~~^^!?~~^~5J!~~YGYP5GPGP5!!^^^^^^!!^^^~!^^^^~J5.::::::::::::'
+           DC.B $0D,$0A
+           DC.B ':::::::::::::::::..?Y??!!JY??P57??7PJY?55PPPPPJ!7?!?7P7^^^^^^~~!7J77::::::::::::'
+           DC.B $0D,$0A
+           DC.B '::::::::::::::::::::.^??J?7?775P7!Y5J7J5YB5GP?777????!^^~^~~^~JY:.::::::::::::::'
+           DC.B $0D,$0A
+           DC.B ':::::::::::::::::::::::::.!~~7YG5PY5~?55BPYP7!!??!~!!!~~!?J!!!::::::::::::::::::'
+           DC.B $0D,$0A
+           DC.B ':::::::::::::::::::::::::::::::GPYY7JJ55P5!!??Y~~7J7Y?!~7.::::::::::::::::::::::'
+           DC.B $0D,$0A
+           DC.B '::::::::::::::::::::::::::::::.5Y5?Y5JBB^:::::::::::::::::::::::::::::::::::::::'
+           DC.B $0D,$0A
+           DC.B '::::::::::::::::::::::::::::::5JY?J5!JB.::::::::::::::::::::::::::::::::::::::::'
+           DC.B $0D,$0A
+           DC.B '::::::::::::::::::::::::::::::P75~P??P5:::::::::::::::::::::::::::::::::::::::::'
+           DC.B $0D,$0A
+           DC.B ':::::::::::::::::::::::::::::.P~P!5?5G!:::::::::::::::::::::::::::::::::::::::::'
+           DC.B $0D,$0A
+           DC.B '::::::::::::::::::::::::::::::B!GJY?P?~:::::::::::::::::::::::::::::::::::::::::'
+           DC.B $0D,$0A
+           DC.B ':::::::::::::::::::::::::::::YG7PY~G5Y?:::::::::::::::::::::::::::::::::::::::::'
+           DC.B $0D,$0A
+           DC.B ':::::::::::::::::::::::::.^~5P?YJ5~?GYJY7^^:::::::::::::::::::::::::::::::::::::'
+           DC.B $0D,$0A
+           DC.B ':::::::::::::::::::::::^~PGGYJYPJP5JYPGJ5PGYJ7^.::::::::::::::::::::::::::::::::'
+           DC.B $0D,$0A
+           DC.B '::::::::::::::::::::::~~^::.:^::..::::~^77~^~~7~.:::::::::::::::::::::::::::::::'
+           DC.B $0D,$0A
            DC.B '::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::',0
 
-SETUP_MSG DC.B 'TODO: SETUP',0
+WINDMILL_ART DC.B 'TODO: WINDMILL ASCII ART',0
+
+SOLAR_PANEL_ART DC.B 'TODO: SOLAR_PANEL ASCII ART',0
+
+*WELCOME MESSAGES
+
+SETUP_MSG DC.B 'Setting up game....',0
 
 WELCOME_MSG DC.B 'TODO: WELCOME',0
 
@@ -383,17 +620,21 @@ GAME_LOOP_MSG DC.B 'TODO: GAME_LOOP',0
 
 CHECK_STATS_MSG DC.B 'TODO: CHECK_STATS',0
 
-CALCULATE_REDUCTION_MSG DC.B 'TODO: CALCULATE_REDUCTION',0
+CALCULATE_REDUCTION_MSG DC.B 'Calculating Carbon Reduction',0
 
-UPDATE_CARBON_MSG DC.B 'TODO: UPDATE_CARBON',0
+UPDATE_CARBON_MSG DC.B 'Current Carbon Count: ',0
 
 UPDATE_TICK_MSG DC.B 'TODO: UPDATE_TICK',0
 
 *SHOP MESSAGES
 
-SHOP_INPUT_MSG DC.B 'Welcome to the shop! What would you like to purchase?'
+SHOP_INPUT_MSG DC.B '::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::'
                DC.B $0D,$0A
-               DC.B '| 1 - Tree | 2 - Windmill | 3 - Solar Panel |',0
+               DC.B '::: Welcome to the shop! What would you like to purchase? ::'
+               DC.B $0D,$0A
+               DC.B ':: 1 - Tree : 2 - Windmill : 3 - Solar Panel : 4 - Cancel ::'
+               DC.B $0D,$0A
+               DC.B '::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::',0
 
 PLANT_TREE_MSG DC.B 'Tree has been planted!',0
 
@@ -433,7 +674,11 @@ CONTINUE_MSG DC.B 'Press enter to continue: ',0
 
 INVALID_OPTION_MSG DC.B 'TODO: INVALID_OPTION',0
 
-TEST_MSG DC.B 'ABCDEFGHIJKLMNOPQRSTUVWXYZABCDEFGHIJKLMNOPQRSTUVWXYZABCDEFGHIJKLMNOPQRSTUVWXYZ12',0
+TEST_MSG DC.B 'TEST STUFF',0
+
+INPUT_SYMBOL DC.B '>> ',0
+
+NEW_LINE DC.B $0D,$0A,0
 
 ****************
 * GAME VARIABLES
@@ -482,6 +727,10 @@ CARBON_INCREASE_RATE DS.W 1
 ************
 
     END    START        
+
+
+
+
 
 
 
