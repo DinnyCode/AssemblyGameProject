@@ -1,32 +1,39 @@
         ORG    $1000
+        
+**************
+**************
+**START GAME**
+**************
+**************
 START:
     BSR SETUP
     BSR WELCOME
     BSR GAME_LOOP
 
-**********************
-*MAIN GAME SUBROUTINES
-**********************
+*************************
+*************************
+**MAIN GAME SUBROUTINES**
+*************************
+
+**********************************
+*DECLARE VARIABLES AND SETUP GAME*
+**********************************
 SETUP:
+    *OUTPUT FOR SETTING UP GAME
     BSR CLEAR_SCREEN
-    
     LEA SETUP_MSG, A1
-    
     BSR PRINT_MSG_ALT
-
     BSR LOADING_OUTPUT  
-
-    *DECLARE VARIABLES AND SETUP GAME
     
-    *DECLARING VARAIBLES
+    *INITIALIZING VARAIBLES
     
     *STARTING VARAIBLES
-    MOVE.W #5, CARBON_AMOUNT          STARTING CARBON LEVEL
+    MOVE.W #5, CARBON_AMOUNT            STARTING CARBON LEVEL
     MOVE.W #100, MONEY                  STARTING MONEY
     MOVE.W #0, TICK_COUNT               STARTING TICK
-
+   
     *END GAME VARIABLES
-    MOVE.W #200, TICK_DEADLINE          DEADLINE TO REDUCE CARBON
+    MOVE.W #5, TICK_DEADLINE          DEADLINE TO REDUCE CARBON
 
     *STRUCTURE STARTING COUNTS
     MOVE.W #0, TREE_COUNT               TOTAL NO. TREES
@@ -41,20 +48,19 @@ SETUP:
     *REDUCTION VARIABLES
     MOVE.W #2, TREE_REDUCTION           REDUCTION VALUE OF TREES
     MOVE.W #5, WINDMILL_REDUCTION       REDUCTION VALUE OF WINDMILLS
-    MOVE.W #10, SOLAR_PANEL_REDUCTION    REDUCTION VALUE OF SOLAR PANELS
+    MOVE.W #10, SOLAR_PANEL_REDUCTION   REDUCTION VALUE OF SOLAR PANELS
     
     *CALCUALTION VARIABLES
     MOVE.W #0, CARON_REDUCTION          RATE CARBON REDUCES BY
     MOVE.W #0, CARBON_INCREASE_RATE     RATE CARBON INCREASES 
-    
-    *OTHER VARIABLES
-    MOVE.W #0, LOADING_LOOP
+    MOVE.W #0, CARBON_COUNTER           COUNTER FOR CARBON PARTICLES REDUCED
     
     RTS
-   
+
+**************************************
+*WELCOMES USER AND INTRODUCES TO GAME*
+**************************************
 WELCOME:
-    *WELCOMES USER AND INTRODUCES TO GAME
-    
     LEA GAME_TITLE, A1                  TITLE SCREEN MESSAGE
     BSR PRINT_MSG
     BSR CLEAR_PROMPT
@@ -65,67 +71,66 @@ WELCOME:
     
     RTS
     
-GAME_LOOP:
-    *MAIN GAME LOOP
-    LEA GAME_LOOP_MSG, A1
-    BSR PRINT_MSG
+****************
+*MAIN GAME LOOP*
+**************** 
+GAME_LOOP:   
+    BSR GAME_STATS                      OUTPUTS CURRENT STATS OF GAME
+    BSR INPUT                           GO TO SHOP OR CONTINUE WITH GAME
     
-    BSR CLEAR_PROMPT
+    BSR UPDATE_TICK                     UPDATES TICK AFTER TURN IS MADE
+        
+    BSR CALCULATE_REDUCTION             CALCULATE REDUCTION VALUE
+    BSR UPDATE_CARBON                   UPDATE CARBON VALUE AFTER BEING REDUCED
+    BSR OUTPUT_CARBON                   OUTPUT UPDATED CARBON VALUE
     
-    BSR GAME_STATS
-    BSR INPUT
-    
-    BSR UPDATE_TICK
-    
-    BSR CALCULATE_REDUCTION
-    BSR UPDATE_CARBON
-    
-    BSR WIN_STATUS
+    BSR WIN_STATUS                      CHECK IF PLAYER HAS WON OR LOST 
 
+**********************
+*OUPUTS STATS OF GAME*
+**********************
 GAME_STATS:
-    *OUPUTS STATS OF GAME
+    *OUTPUT SUB ROUTINE MESSAGE
     LEA GAME_STATS_MSG, A1
     BSR PRINT_MSG
    
     *OUTPUT CARBON COUNT
     LEA UPDATE_CARBON_MSG, A1
     BSR PRINT_MSG_ALT
-    
     LEA CARBON_AMOUNT, A1
     BSR PRINT_NUM
     
     *OUTPUT MONEY
     LEA MONEY_MSG, A1
     BSR PRINT_MSG_ALT
-    
     LEA MONEY, A1
     BSR PRINT_NUM
     
     *OUTPUT TICK
     LEA TICK_MSG, A1
     BSR PRINT_MSG_ALT
-    
     LEA TICK_COUNT, A1
     BSR PRINT_NUM
 
     *OUTPUT TICK DEADLINE
     LEA TICK_DEADLINE_1_MSG,A1
     BSR PRINT_MSG_ALT
-    
     LEA TICK_DEADLINE, A1
     MOVE.W (A1),D1
     MOVE.B #3, D0
     TRAP #15
-    
     LEA TICK_DEADLINE_2_MSG,A1
     BSR PRINT_MSG
     
     BSR CLEAR_PROMPT
 
     RTS
-    
+
+***************************************************
+*PROMPTS USER FOR INPUT TO GO TO SHOP OR SKIP TURN*
+***************************************************
 INPUT:
-    *PROMPTS USER FOR INPUT TO GO TO SHOP OR SKIP TURN
+    *PROMPT PLAYER FOR INPUT
     LEA INPUT_MSG, A1
     BSR PRINT_MSG
     
@@ -144,9 +149,11 @@ INPUT:
     
     *RTS IF PLAYER ENTERS 0
     RTS
-        
-SHOP:
-    *ALLOWS USER TO BUY STRUCTURES
+    
+*******************************
+*ALLOWS USER TO BUY STRUCTURES*
+*******************************      
+SHOP:   
     BSR CLEAR_SCREEN
     
     *OUTPUT ASCII ART
@@ -157,7 +164,6 @@ SHOP:
     *PROMPT USER FOR INPUT
     LEA SHOP_INPUT_MSG, A1
     BSR PRINT_MSG
-    
     BSR INPUT_PROMPT
     
     *OPTION TO PLANT TREE
@@ -182,6 +188,9 @@ SHOP:
     *RTS IF PLAYER ENTERS 4
     RTS
     
+**********************
+*PLANT TREE STRUCTURE*
+**********************
 PLANT_TREE:
     *PLANTS TREE STRUCTURE
     BSR CLEAR_SCREEN
@@ -191,7 +200,7 @@ PLANT_TREE:
     BSR PRINT_MSG
     BSR CLEAR_PROMPT
     
-    *ADDING TO TREE COUNT
+    *ADDS TO TREE COUNT
     ADD #1, TREE_COUNT 
     
     *SUBTRACTING COST OF TREE
@@ -204,12 +213,11 @@ PLANT_TREE:
     BSR PRINT_MSG
     BSR CLEAR_PROMPT
     
-    BSR LOCATION
-    
     RTS
-    
+**************************
+*BUILD WINDMILL STRUCTURE*
+**************************
 BUILD_WINDMILL:
-    *BUILDS WINDMILL STRUCTURE 
     BSR CLEAR_SCREEN
     
     *OUTPUT ASCII ART
@@ -217,7 +225,7 @@ BUILD_WINDMILL:
     BSR PRINT_MSG
     BSR CLEAR_PROMPT
     
-    *ADDING TO WINDMILL COUNT
+    *ADDS TO WINDMILL COUNT
     ADD #1, WINDMILL_COUNT   
     
     *SUBTRACTING COST OF WINDMILL
@@ -230,12 +238,12 @@ BUILD_WINDMILL:
     BSR PRINT_MSG
     BSR CLEAR_PROMPT
     
-    BSR LOCATION
-    
     RTS
-
-BUILD_SOLAR_PANEL:
-    *BUILDS SOLAR PANEL STRUCTURE    
+    
+******************************
+*BUILDS SOLAR PANEL STRUCTURE*
+******************************
+BUILD_SOLAR_PANEL: 
     BSR CLEAR_SCREEN
     
     *OUTPUT ASCII ART
@@ -243,7 +251,7 @@ BUILD_SOLAR_PANEL:
     BSR PRINT_MSG
     BSR CLEAR_PROMPT
     
-    *ADDING TO SOLAR PANEL COUNT
+    *ADDS TO SOLAR PANEL COUNT
     ADD #1, SOLAR_PANEL_COUNT    
     
     *SUBTRACTING COST OF SOLAR PANEL
@@ -256,146 +264,48 @@ BUILD_SOLAR_PANEL:
     BSR PRINT_MSG
     BSR CLEAR_PROMPT
     
-    BSR LOCATION
-    
     RTS
     
-LOCATION:
-    *ALLOWS USER TO CHOOSE WHERE TO BUILD STRUCTURE
-    LEA LOCATION_MSG, A1
-    BSR PRINT_MSG
-        
-    BSR CLEAR_PROMPT
-    
-    BSR INVENTORY
-    
-    RTS
-    
+*****************************
+*OUTPUTS INVENTORY OF PLAYER*
+*****************************
 INVENTORY:
-    *CHECKS INVENTORY OF USER
+    *OUTPUT MESSAGE
     LEA INVENTORY_MSG, A1
     BSR PRINT_MSG
-    
-    BSR CLEAR_PROMPT
     
     *TREE COUNT OUTPUT
     LEA UPDATE_TREE_MSG, A1
     BSR PRINT_MSG_ALT
-    
     LEA TREE_COUNT, A1
     BSR PRINT_NUM
     
     *WINDMILL COUNT OUTPUT
     LEA UPDATE_WINDMILL_MSG, A1
-    BSR PRINT_MSG_ALT
-    
+    BSR PRINT_MSG_ALT 
     LEA WINDMILL_COUNT, A1
     BSR PRINT_NUM
 
     *SOLAR PANEL COUNT OUTPUT
     LEA UPDATE_SOLAR_PANEL_MSG , A1
-    BSR PRINT_MSG_ALT
-    
+    BSR PRINT_MSG_ALT 
     LEA SOLAR_PANEL_COUNT, A1
     BSR PRINT_NUM
     
     *MONEY OUTPUT
     LEA MONEY_MSG, A1
     BSR PRINT_MSG_ALT
-    
     LEA MONEY, A1
     BSR PRINT_NUM
     
     BSR CLEAR_PROMPT
     
     RTS
-
-CALCULATE_REDUCTION:
-    *CALCULATE CARBON REDUCTION AMOUNT
     
-    *RESETTING REDUCTION TO ZERO
-    MOVE.W #0, D6
-    
-    LEA CALCULATE_REDUCTION_MSG, A1
-    BSR PRINT_MSG
-    
-    BSR CLEAR_PROMPT
-    
-    *TREE REDUCTION
-    LEA TREE_COUNT, A4
-    LEA TREE_REDUCTION, A5
-    
-    MOVE.W (A4),D4
-    MOVE.W (A5),D5
-    
-    MULU D4,D5
-      
-    ADD D5, D6                  ADDING TO TOTAL REDUCTION
-    
-    *WINDMILL REDUCTION
-    LEA WINDMILL_COUNT, A4
-    LEA WINDMILL_REDUCTION, A5
-    
-    MOVE.W (A4),D4
-    MOVE.W (A5),D5
-    
-    MULU D4,D5
-    
-    ADD D5, D6                  ADDING TO TOTAL REDUCTION
-
-    *SOLAR PANEL REDUCTION
-    LEA SOLAR_PANEL_COUNT, A4
-    LEA SOLAR_PANEL_REDUCTION, A5
-    
-    MOVE.W (A4),D4
-    MOVE.W (A5),D5
-    
-    MULU D4,D5
-    
-    ADD D5, D6                  ADDING TO TOTAL REDUCTION
-    
-    *OUTPUTTING CARBON REDUCTION
-    MOVE D6, (CARON_REDUCTION)
-    LEA CARBON_REDUCTION_AMOUNT_MSG, A1
-    BSR PRINT_MSG_ALT
-    
-    LEA CARON_REDUCTION, A1
-    BSR PRINT_NUM
-   
-    BSR CLEAR_PROMPT
-    
-    RTS
-
-UPDATE_CARBON:
-    *UPDATES CARON AMOUNT
-
-    *SUBTRACT CARBON_REDUCTION VALUE FROM CARBON_AMOUNT
-    SUB D6, CARBON_AMOUNT
-    
-    
-    *VALIDATION
-    CMP #0, CARBON_AMOUNT
-    BLE CARBON_VALIDATION
-    
-    *OUTPUT NEW CARBON AMOUNT
-    LEA UPDATE_CARBON_MSG, A1
-    BSR PRINT_MSG_ALT
-    
-    LEA CARBON_AMOUNT, A1
-    BSR PRINT_NUM
-    
-    BSR CLEAR_PROMPT
-    
-    RTS
-    
-CARBON_VALIDATION:
-    *SETS CARBON AMOUNT TO 0 IF IT HAS BEEN REDUCED PAST 0
-    MOVE.W #0,CARBON_AMOUNT
-    RTS
-
+******************************
+*UPDATES TICK FOR TURN PASSED* 
+******************************
 UPDATE_TICK:
-    *UPDATES TICK FOR TURN PASSED
-    
     BSR CLEAR_SCREEN
     
     *UPDATING TICK
@@ -404,27 +314,110 @@ UPDATE_TICK:
     *UPDATING TICK DEADLINE
     SUB #1, TICK_DEADLINE
     
-    *OUTPUTTING CURRENT TICK
+    *OUTPUTTING TICK UPDATED MESSAGE
     LEA UPDATE_TICK_MSG, A1
     BSR PRINT_MSG
     
+    *OUTPUTTING CURRENT TICK 
     LEA TICK_COUNT_MSG, A1
     BSR PRINT_MSG_ALT
-    
     LEA TICK_COUNT, A1
     BSR PRINT_NUM
     
     BSR CLEAR_PROMPT
     
     RTS
-
-WIN_STATUS
-    *CHECKS IF WIN OR LOSS STATUS HAS BEEN MET
-    LEA WIN_STATUS_MSG, A1
+    
+***********************************
+*CALCULATE CARBON REDUCTION AMOUNT*
+***********************************
+CALCULATE_REDUCTION:
+    *RESETTING REDUCTION TO ZERO
+    MOVE.W #0, D6
+    
+    *OUTPUT MESSAGE
+    LEA CALCULATE_REDUCTION_MSG, A1
     BSR PRINT_MSG
+    
+    *TREE REDUCTION
+    LEA TREE_COUNT, A4
+    LEA TREE_REDUCTION, A5
+    MOVE.W (A4),D4
+    MOVE.W (A5),D5
+    MULU D4,D5
+      
+    ADD D5, D6                  ADDING TO TOTAL REDUCTION
+    
+    *WINDMILL REDUCTION
+    LEA WINDMILL_COUNT, A4
+    LEA WINDMILL_REDUCTION, A5
+    MOVE.W (A4),D4
+    MOVE.W (A5),D5
+    MULU D4,D5
+    
+    ADD D5, D6                  ADDING TO TOTAL REDUCTION
+
+    *SOLAR PANEL REDUCTION
+    LEA SOLAR_PANEL_COUNT, A4
+    LEA SOLAR_PANEL_REDUCTION, A5
+    MOVE.W (A4),D4
+    MOVE.W (A5),D5
+    MULU D4,D5
+    
+    ADD D5, D6                  ADDING TO TOTAL REDUCTION
+    
+    *OUTPUTTING CARBON REDUCTION
+    MOVE D6, (CARON_REDUCTION)
+    LEA CARBON_REDUCTION_AMOUNT_MSG, A1
+    BSR PRINT_MSG_ALT
+    LEA CARON_REDUCTION, A1
+    BSR PRINT_NUM
     
     BSR CLEAR_PROMPT
     
+    RTS
+    
+**********************
+*UPDATES CARON AMOUNT*
+**********************
+UPDATE_CARBON:
+    *SUBTRACT CARBON_REDUCTION VALUE FROM CARBON_AMOUNT
+    SUB D6, CARBON_AMOUNT
+    
+    *ADD TO CARBON COUNTER 
+    ADD #1, CARBON_COUNTER
+    
+    *VALIDATION FOR WHEN VALUE GOES BELOW '0'
+    CMP #0, CARBON_AMOUNT
+    BLE CARBON_VALIDATION
+    
+    RTS
+
+******************************
+*OUTPUTS UPDATED CARBON VALUE*
+******************************
+OUTPUT_CARBON:
+    *OUTPUT NEW CARBON AMOUNT
+    LEA UPDATE_CARBON_MSG, A1
+    BSR PRINT_MSG_ALT
+    LEA CARBON_AMOUNT, A1
+    BSR PRINT_NUM
+    
+    BSR CLEAR_PROMPT
+    
+    RTS
+
+*******************************************************
+*SETS CARBON AMOUNT TO 0 IF IT HAS BEEN REDUCED PAST 0*
+*******************************************************
+CARBON_VALIDATION:
+    MOVE.W #0,CARBON_AMOUNT
+    BSR OUTPUT_CARBON
+
+*******************************************
+*CHECKS IF WIN OR LOSS STATUS HAS BEEN MET*
+*******************************************
+WIN_STATUS
     *CHECK THAT TICK DEADLINE HAS NOT BEEN MET YET
     LEA TICK_DEADLINE, A7
     CMP #0, (A7)
@@ -436,35 +429,31 @@ WIN_STATUS
     BLE VICTORY
     
     *OTHERWISE CONTINUE
-    BSR EVENT_STATUS
-    
-EVENT_STATUS:
-    LEA EVENT_STATUS_MSG, A1
-    BSR PRINT_MSG
-    
-    BSR CLEAR_PROMPT
-    
-    *IF COMPARISONS COME BACK TRUE, GO TO RELEVANT SR
-    
-    *ELSE
     BRA GAME_LOOP
-
 
 *******************
 *EVENT SUB ROUTINES
 *******************
-    
-*************************
-*END OF GAME SUB ROUTINES
-*************************
-    
+
+****************************    
+****************************
+**END OF GAME SUB ROUTINES**
+****************************
+****************************
+
+****************
+*PLAYER HAS WON*
+****************
 VICTORY:
-    *USER HAS WON GAME
+    BSR CLEAR_PROMPT
+    
+    *OUTPUT VICTORY MESSAGE
     LEA VICTORY_ART, A1
     BSR PRINT_MSG
     
     BSR CLEAR_PROMPT
     
+    *OUTPUT VICTORY ASCII ART
     LEA TROPHY_ART, A1
     BSR PRINT_MSG
     
@@ -472,13 +461,19 @@ VICTORY:
     
     BSR FINAL_STATS
 
+*****************
+*PLAYER HAS LOST*
+*****************
 LOSS:
-    *USER HAS LOST GAME
+    BSR CLEAR_PROMPT
+    
+    *OUTPUT LOSS MESSAGE
     LEA LOSS_ART, A1
     BSR PRINT_MSG
     
     BSR CLEAR_PROMPT
     
+    *OUTPUT LOSS ASCII ART
     LEA SAD_FACE_ART, A1
     BSR PRINT_MSG
     
@@ -486,47 +481,44 @@ LOSS:
     
     BSR FINAL_STATS
 
+*****************************
+*OUTPUTS FINAL STATS OF USER*
+*****************************
 FINAL_STATS:
-    *OUTPUTS FINAL STATS OF USER
+    *OUTPUT MESSAGE
     LEA FINAL_STATS_MSG, A1
     BSR PRINT_MSG
    
-    *OUTPUT CARBON COUNT
+    *OUTPUT FINAL CARBON COUNT
     LEA FINAL_STATS_CARBON_1, A1
     BSR PRINT_MSG_ALT
-    
-    LEA CARBON_AMOUNT, A1
+    LEA CARBON_COUNTER, A1
     BSR PRINT_NUM_ALT
-    
     LEA FINAL_STATS_CARBON_2, A1
     BSR PRINT_MSG
     
-    *OUTPUT MONEY
+    *OUTPUT FINAL MONEY
     LEA FINAL_STATS_MONEY, A1
     BSR PRINT_MSG_ALT
-    
     LEA MONEY, A1
-    BSR PRINT_NUM
+    BSR PRINT_NUM_ALT
+    BSR FORMATTER
     
-    *OUTPUT TICK
+    *OUTPUT FINAL  TICK
     LEA FINAL_STATS_TICK_1, A1
     BSR PRINT_MSG_ALT
-    
     LEA TICK_COUNT, A1
     BSR PRINT_NUM_ALT
-    
     LEA FINAL_STATS_TICK_2, A1
     BSR PRINT_MSG
 
-    *OUTPUT TICK DEADLINE
+    *OUTPUT FINAL TICK DEADLINE
     LEA FINAL_STATS_DEADLINE_1,A1
     BSR PRINT_MSG_ALT
-    
     LEA TICK_DEADLINE, A1
     MOVE.W (A1),D1
     MOVE.B #3, D0
     TRAP #15
-    
     LEA FINAL_STATS_DEADLINE_2,A1
     BSR PRINT_MSG
     
@@ -534,19 +526,23 @@ FINAL_STATS:
     
     BSR REPLAY
     
+*************************************
+*PROMPTS USER TO REPLAY OR EXIT GAME*
+************************************* 
 REPLAY: 
-    *PROMPTS USER TO REPLAY OR EXIT GAME
+    *PROMPT PLAYER FOR INPUT
     LEA REPLAY_MSG, A1
     BSR PRINT_MSG
     
     BSR INPUT_PROMPT
     
+    *PLAYER WANTS TO REPLAY GAME
     CMP #1, D1
     BEQ START
     
+    *PLAYER WANTS TO EXIT GAME
     CMP #0, D1
     BEQ EXIT_GAME
-    
     
     *VALIDATION
     CMP #1, D1
@@ -555,12 +551,20 @@ REPLAY:
     CMP #0, D1
     BLT REPLAY_VALIDATION
     
+    *ELSE FOR VALIDATION
     BRA REPLAY
-    
-********************
-*FORMATTING AND
-*OUTPUT SUB ROUTINES
-********************
+ 
+ 
+**************************************   
+**************************************
+**FORMATTING AND OUTPUT SUB ROUTINES**
+**************************************
+**************************************
+
+******************************
+*PRINTS SYMBOL USED FOR INPUT*
+*AND TAKES USER INPUT        *
+******************************
 INPUT_PROMPT:
     LEA INPUT_SYMBOL, A1
     MOVE.B #14, D0
@@ -571,6 +575,9 @@ INPUT_PROMPT:
     
     RTS
 
+*********************************
+*CLEARS SCREEN WITHOUT PROMPTING*
+*********************************
 CLEAR_SCREEN:
     MOVE #11, D0
     MOVE.W #$FF00, D1
@@ -579,10 +586,11 @@ CLEAR_SCREEN:
     MOVE.W #0, D1
     
     RTS
-
-CLEAR_PROMPT:
-    *SR TO CLEAR SCREEN
     
+******************************
+*PROMPTS USER TO CLEAR SCREEN*
+******************************
+CLEAR_PROMPT:   
     LEA CONTINUE_MSG,A1
     MOVE.B #14,D0
     TRAP #15
@@ -598,19 +606,28 @@ CLEAR_PROMPT:
     MOVE.W #0, D1
     
     RTS
-    
+
+*************************************
+*PRINTS MESSAGE WITH CARRIAGE RETURN*
+*************************************   
 PRINT_MSG:
     MOVE.B #13, D0
     TRAP #15
     
     RTS
     
+****************************************
+*PRINTS MESSAGE WITHOUT CARRIAGE RETURN*
+****************************************
 PRINT_MSG_ALT:
     MOVE.B #14, D0
     TRAP #15
     
     RTS
-    
+
+***********************************
+*PRINTS NUMBER WITH FORMATTER LINE*
+***********************************
 PRINT_NUM:
     MOVE.W (A1),D1
     MOVE.B #3, D0
@@ -618,22 +635,29 @@ PRINT_NUM:
     
     BSR FORMATTER
     
-    BSR NEW_LINE_OUTPUT
-    
     RTS
     
+**************************************
+*PRINTS NUMBER WITHOUT FORMATTER LINE*
+**************************************  
 PRINT_NUM_ALT:
     MOVE.W (A1),D1
     MOVE.B #3, D0
     TRAP #15
     
     RTS
-    
+
+****************************
+*PRINTS LINE FOR FORMATTING*
+****************************   
 FORMATTER:
     LEA FORMATTER_MSG,A1
     BSR PRINT_MSG
     RTS
-    
+
+***********************
+*USED FOR LOADING TEXT*
+***********************
 LOADING_OUTPUT:
     LEA LOADING_SYMBOL, A1
     BSR PRINT_MSG_ALT
@@ -645,17 +669,25 @@ LOADING_OUTPUT:
     BSR CLEAR_PROMPT
     
     RTS
-    
+
+********************
+*OUTPUTS BLANK LINE*
+********************  
 NEW_LINE_OUTPUT:
     LEA NEW_LINE, A1
     BSR PRINT_MSG
     RTS
-    
-****************************
-*SUB ROUTINES FOR VALIDATION
-****************************
+   
+******************************* 
+*******************************
+**SUB ROUTINES FOR VALIDATION**
+*******************************
+*******************************
+
+*******************************
+*OUTPUTS INVALID INPUT MESSAGE*
+*******************************
 VALIDATION:
-    *OUTPUT INVALID OPTION MESSAGE
     BSR CLEAR_SCREEN
     
     LEA INVALID_OPTION_MSG, A1
@@ -666,58 +698,68 @@ VALIDATION:
     
     RTS
     
+**********************************
+*VALIDATION FOR INPUT SUB ROUTINE*
+**********************************
 INPUT_VALIDATION:
-    *VALIDATION FOR INPUT SUB ROUTINE
     BSR VALIDATION
-    
-    *RETURN TO INPUT SUBROUTINE
     BRA INPUT
-   
+
+*********************************
+*VALIDATION FOR SHOP SUB ROUTINE*
+********************************* 
 SHOP_VALIDATION:
-    *VALIDATION FOR SHOP SUB ROUTINE
     BSR VALIDATION
-    
-    *RETURN TO SHOP SUBROUTINE
     BRA SHOP
 
+***********************************
+*VALIDATION FOR REPLAY SUB ROUTINE*
+***********************************
 REPLAY_VALIDATION:
-    *VALIDATION FOR REPLAYSUB ROUTINE
     BSR VALIDATION
-    
-    *RETURN TO REPLAYSUBROUTINE
     BRA REPLAY
-    
-***************
-*END OF PROGRAM
-***************
+
+
+*****************
+*****************
+*****************
+***END OF GAME***
+*****************
+*****************
+*****************
 EXIT_GAME:
-    *EXITS GAME
     BSR CLEAR_SCREEN
     
+    *OUTPUT EXIT ART
     LEA EXIT_ART,A1
     BSR PRINT_MSG
     
+    *OUTPUT EXIT MESSAGE
     LEA EXIT_MSG, A1
     BSR PRINT_MSG
     
     BSR CLEAR_PROMPT
+    
+    *END GAME
                     
     SIMHALT   
         
-******************
-*PROGRAM VARIABLES
-******************
+*******************
+*PROGRAM VARIABLES*
+*******************
     
-****************
-*OUTPUT MESSAGES
-****************
+*****************
+*OUTPUT MESSAGES*
+*****************
+
+
 *WELCOME MESSAGES
 
 SETUP_MSG DC.B 'Setting up game',0
 
 WELCOME_MSG DC.B '::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::'
             DC.B $0D,$0A
-            DC.B ':::::::::::::::::::::::::: Welcome to Carbon Crusher! ::::::::::::::::::::::::::'
+            DC.B ':::::::::::::::::::::::  Welcome  to  Carbon  Crusher!  ::::::::::::::::::::::::'
             DC.B $0D,$0A
             DC.B '::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::'
             DC.B $0D,$0A
@@ -737,11 +779,15 @@ WELCOME_MSG DC.B '::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
             DC.B $0D,$0A
             DC.B ':------------------------------------------------------------------------------:'
             DC.B $0D,$0A
-            DC.B '>These cost you money, which you can earn at random events. Spend wisely! ::::::'
+            DC.B '>These cost you money, which you have a limited amount of. Spend wisely! :::::::'
             DC.B $0D,$0A
             DC.B ':------------------------------------------------------------------------------:'
             DC.B $0D,$0A
             DC.B '>Different structures cost more but they are more effective at reducing carbon.:'
+            DC.B $0D,$0A
+            DC.B ':------------------------------------------------------------------------------:'
+            DC.B $0D,$0A
+            DC.B '>Reduction is based on what structures you have and how many of them you have.::'
             DC.B $0D,$0A
             DC.B ':------------------------------------------------------------------------------:'
             DC.B $0D,$0A
@@ -753,18 +799,15 @@ WELCOME_MSG DC.B '::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
             DC.B $0D,$0A
             DC.B ':------------------------------------------------------------------------------:'
             DC.B $0D,$0A
-            DC.B '>Carbon is based on what structures you have and how many of them you have. ::::'
-            DC.B $0D,$0A
             DC.B ':------------------------------------------------------------------------------:'
             DC.B $0D,$0A
             DC.B '>And that is all crusher. Good luck out there and make sure to save the planet!:'
             DC.B $0D,$0A
             DC.B '::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::'
             DC.B $0D,$0A
-            DC.B ':::::::::::::::::::::::::::::: Good luck crusher! ::::::::::::::::::::::::::::::'
+            DC.B '::::::::::::::::::::::::::::  Good  Luck  Crusher!  ::::::::::::::::::::::::::::'
             DC.B $0D,$0A
             DC.B '::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::',0
-
 
 *GAME LOOP MESSAGES
 
@@ -798,7 +841,7 @@ CARBON_REDUCTION_AMOUNT_MSG DC.B '::::::::::::::::::::::::::::::::::::::::::::::
 UPDATE_CARBON_MSG DC.B '::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::'
                   DC.B $0D,$0A
                   DC.B '::  Current  Carbon Count:  ',0
-                  
+                                 
 *TICK MESSAGES
 
 TICK_MSG DC.B '::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::'
@@ -845,19 +888,15 @@ BUILD_WINDMILL_MSG  DC.B '::::::::::::::::::::::::::::::::::::::::::::::::::::::
                     DC.B $0D,$0A
                     DC.B '::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::',0
 
-
 BUILD_SOLAR_PANEL_MSG   DC.B '::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::'
                         DC.B $0D,$0A
                         DC.B ':::::::::::::::::::::  You  have  built  a solar  panel!  ::::::::::::::::::::::'
                         DC.B $0D,$0A
                         DC.B '::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::',0
 
-
 MONEY_MSG DC.B '::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::'
           DC.B $0D,$0A
           DC.B 'Money: $',0
-
-LOCATION_MSG DC.B 'TODO: LOCATION',0
 
 *INVENTORY MESSAGES
 
@@ -883,57 +922,72 @@ UPDATE_SOLAR_PANEL_MSG  DC.B '::::::::::::::::::::::::::::::::::::::::::::::::::
 
 WIN_STATUS_MSG DC.B 'Checking Win Status',0
 
-EVENT_STATUS_MSG DC.B 'TODO: EVENT STATUS',0
-
 *WIN/LOSS MESSAGES
 
 VICTORY_MSG DC.B 'Victory! You have reduced carbon emissions in time and saved the world!',0
 
 LOSS_MSG DC.B 'Carbon emissions have not been reduced in time! You have lost!',0
 
-*END GAME MESSAGES
-
-FINAL_STATS_MSG DC.B 'Here are your final stats of this game: ',0
+*FINAL STATS MESSAGES
+FINAL_STATS_MSG DC.B '::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::'
+                DC.B $0D,$0A
+                DC.B ':::::::::::::::  Here  are  your  final  stats  of  this  game  ::::::::::::::::'
+                DC.B $0D,$0A
+                DC.B '::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::',0
 
 FINAL_STATS_CARBON_1 DC.B '::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::'
                      DC.B $0D,$0A
-                     DC.B 'You managed to crush: ',0
+                     DC.B '::  You  managed  to  crush:  ',0
 
-FINAL_STATS_CARBON_2 DC.B ' carbon particles '
+FINAL_STATS_CARBON_2 DC.B '  carbon  particles '
                      DC.B $0D,$0A
-                     DC.B '::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::'
+                     DC.B '::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::',0
 
 FINAL_STATS_MONEY DC.B '::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::'
                   DC.B $0D,$0A
-                  DC.B 'You finished with: $',0
+                  DC.B '::  You  finished  with:  $',0
 
 FINAL_STATS_TICK_1 DC.B '::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::'
                    DC.B $0D,$0A
-                   DC.B 'You finished the game in: ',0
+                   DC.B '::  You  finished  the  game in: ',0
 
-FINAL_STATS_TICK_2 DC.B ' ticks'
+FINAL_STATS_TICK_2 DC.B '  ticks'
                    DC.B $0D,$0A
                    DC.B '::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::',0
 
-FINAL_STATS_DEADLINE_1 DC.B 'You had: ',0
+FINAL_STATS_DEADLINE_1 DC.B '::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::'
+                       DC.B $0D,$0A
+                       DC.B '::  You  had:  ',0
 
-FINAL_STATS_DEADLINE_2 DC.B ' ticks left to save the planet',0
+FINAL_STATS_DEADLINE_2 DC.B ' ticks  left  to  save  the  planet'
+                       DC.B $0D,$0A
+                       DC.B '::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::',0
 
-EXIT_MSG DC.B 'Thank you for playing Carbon Crusher!',0
+*END GAME MESSAGES
 
-REPLAY_MSG DC.B 'Would you like to replay the game?'
+REPLAY_MSG DC.B '::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::'
            DC.B $0D,$0A
-           DC.B '>> 1 - Yes'
+           DC.B '::::::::::::::::::  Would  you  like  to  replay  the  game?  ::::::::::::::::::'
            DC.B $0D,$0A
-           DC.B '>> 0 - No',0
+           DC.B '................................................................................'
+           DC.B $0D,$0A
+           DC.B '::::::::::::::::::::::::::  1  -  Yes  |  0  -  No  ::::::::::::::::::::::::::::'
+           DC.B $0D,$0A
+           DC.B '::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::',0
+           
+EXIT_MSG    DC.B '::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::'
+            DC.B $0D,$0A
+            DC.B ':::::::::::::::::  Thank  you  for  playing  Carbon  Crusher!  :::::::::::::::::'
+            DC.B $0D,$0A
+            DC.B '::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::',0
 
 *FORMATTING MESSAGES
 
 FORMATTER_MSG DC.B $0D,$0A
-                    DC.B '::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::',0
+              DC.B '::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::',0
 
 CONTINUE_MSG DC.B   $0D,$0A
-             DC.B   'Press enter to continue: ',0
+             DC.B   '> Press  enter  to  continue ',0
 
 INVALID_OPTION_MSG DC.B 'Invalid Option! Please try again!',0
 
@@ -941,15 +995,17 @@ LOADING_SYMBOL DC.B '.',0
 
 INPUT_SYMBOL DC.B '>> ',0
 
-FLUFFER_1 DC.B ':::::::::::::::::::::::::::::::',0
+MEMORY_PACKER_1 DC.B ':::::::::::::::::::::::::::::::',0
 
 NEW_LINE DC.B $0D,$0A,0
 
-FLUFFER_2 DC.B ':::::::::::::::::::::::::::::::',0
+MEMORY_PACKER_2 DC.B ':::::::::::::::::::::::::::::::',0
 
 ****************
-* GAME VARIABLES
+*GAME VARIABLES*
 ****************
+
+*MAIN GAME VALUES
 
 CARBON_AMOUNT DS.W 1
 
@@ -974,6 +1030,7 @@ SOLAR_PANEL_COUNT DS.W 1
 SOLAR_PANEL_COST DS.W 1
 
 *REDUCTION VARIABLES
+
 TREE_REDUCTION DS.W 1
 
 WINDMILL_REDUCTION DS.W 1
@@ -986,14 +1043,11 @@ CARON_REDUCTION DS.W 1
 
 CARBON_INCREASE_RATE DS.W 1
 
-*OTHER VARIABLES
+CARBON_COUNTER DS.W 1
 
-LOADING_LOOP DS.W 1
-
-
-**********
-*ASCII ART
-**********
+***********
+*ASCII ART*
+***********
 
 *GAME START AND SETUP MESSAGES
 GAME_TITLE DC.B '::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::'
@@ -1033,6 +1087,7 @@ GAME_TITLE DC.B ':::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
            DC.B '::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::',0           
 
 *SHOP ART
+
 SHOP_ART   DC.B '::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::'
 			DC.B $0D,$0A
 			DC.B '::::::::::::##::::::::::::::::##:::::::::::::::::##::::::::::::::::##:::::::::::'
@@ -1075,6 +1130,8 @@ SHOP_ART   DC.B ':::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 			DC.B '::::::::....##..::::::::::....##..:::::::::::....##..::::::::::....##..:::::::::'
 			DC.B $0D,$0A
 			DC.B '::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::',0
+			
+*STRUCTURE ART
 
 TREE_ART   DC.B '::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::'
            DC.B $0D,$0A
@@ -1246,6 +1303,8 @@ SOLAR_PANEL_ART DC.B '::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 				DC.B $0D,$0A
                 DC.B '::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::',0
                 
+*END GAME ART      
+     
 VICTORY_ART 
 			    DC.B '::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::'
 			    DC.B $0D,$0A
@@ -1281,7 +1340,7 @@ VICTORY_ART
 				DC.B $0D,$0A
 				DC.B '::::::::..::::::.......::::.......:::::::...::...:::....::..::::..::....::::::::'
 				DC.B $0D,$0A
-				DC.B '::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::',0
+				DC.B '::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::',0	
 				
 TROPHY_ART
 				DC.B '::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::'
@@ -1467,11 +1526,13 @@ EXIT_ART
 				DC.B $0D,$0A
 				DC.B ':::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::',0
 
-************
-*END PROGRAM
-************
+*************
+*END PROGRAM*
+*************
 
     END    START        
+
+
 
 
 
