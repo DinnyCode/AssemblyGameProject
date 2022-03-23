@@ -1,4 +1,8 @@
-        ORG    $1000
+*********************************
+*AUTHOR:        DENIS PERPELYUK *
+*STUDENT ID:    C00259076       *
+*********************************
+    ORG    $1000
         
 **************
 **************
@@ -14,6 +18,7 @@ START:
 *************************
 **MAIN GAME SUBROUTINES**
 *************************
+*************************
 
 **********************************
 *DECLARE VARIABLES AND SETUP GAME*
@@ -28,12 +33,12 @@ SETUP:
     *INITIALIZING VARAIBLES
     
     *STARTING VARAIBLES
-    MOVE.W #5, CARBON_AMOUNT            STARTING CARBON LEVEL
+    MOVE.W #200, CARBON_AMOUNT          STARTING CARBON LEVEL
     MOVE.W #100, MONEY                  STARTING MONEY
     MOVE.W #0, TICK_COUNT               STARTING TICK
    
     *END GAME VARIABLES
-    MOVE.W #5, TICK_DEADLINE          DEADLINE TO REDUCE CARBON
+    MOVE.W #10, TICK_DEADLINE           DEADLINE TO REDUCE CARBON
 
     *STRUCTURE STARTING COUNTS
     MOVE.W #0, TREE_COUNT               TOTAL NO. TREES
@@ -46,9 +51,9 @@ SETUP:
     MOVE.W #10, SOLAR_PANEL_COST        COST OF SOLAR PANEL
     
     *REDUCTION VARIABLES
-    MOVE.W #2, TREE_REDUCTION           REDUCTION VALUE OF TREES
-    MOVE.W #5, WINDMILL_REDUCTION       REDUCTION VALUE OF WINDMILLS
-    MOVE.W #10, SOLAR_PANEL_REDUCTION   REDUCTION VALUE OF SOLAR PANELS
+    MOVE.W #3, TREE_REDUCTION           REDUCTION VALUE OF TREES
+    MOVE.W #10, WINDMILL_REDUCTION      REDUCTION VALUE OF WINDMILLS
+    MOVE.W #15, SOLAR_PANEL_REDUCTION   REDUCTION VALUE OF SOLAR PANELS
     
     *CALCUALTION VARIABLES
     MOVE.W #0, CARON_REDUCTION          RATE CARBON REDUCES BY
@@ -161,9 +166,58 @@ SHOP:
     BSR PRINT_MSG
     BSR CLEAR_PROMPT
     
-    *PROMPT USER FOR INPUT
+    *OUTPUT SHOP MESSAGE
+    LEA SHOP_WELCOME_MSG, A1
+    BSR PRINT_MSG
+    
+    *STRUCTURE COSTS
+    LEA SHOP_INFO_MSG_1,A1
+    BSR PRINT_MSG
+    
+    *OUTPUT TREE COST
+    LEA TREE_COST_MSG, A1
+    BSR PRINT_MSG_ALT
+    LEA TREE_COST, A1
+    BSR PRINT_NUM
+    
+    *OUTPUT WINDMILL COST
+    LEA WINDMILL_COST_MSG, A1
+    BSR PRINT_MSG_ALT
+    LEA WINDMILL_COST, A1
+    BSR PRINT_NUM
+    
+    *OUTPUT SOLAR PANEL COST
+    LEA SOLAR_PANEL_COST_MSG, A1
+    BSR PRINT_MSG_ALT
+    LEA SOLAR_PANEL_COST, A1
+    BSR PRINT_NUM
+
+    *STRUCTURE REDUCTION AMOUNTS
+    LEA SHOP_INFO_MSG_2,A1
+    BSR PRINT_MSG
+    
+    *OUTPUT TREE REDUCTION AMOUNT
+    LEA TREE_REDUCTION_MSG, A1
+    BSR PRINT_MSG_ALT
+    LEA TREE_REDUCTION, A1
+    BSR PRINT_NUM
+    
+    *OUTPUT WINDMILL REDUCTION AMOUNT
+    LEA WINDMILL_REDUCTION_MSG, A1
+    BSR PRINT_MSG_ALT
+    LEA WINDMILL_REDUCTION, A1
+    BSR PRINT_NUM
+    
+    *OUTPUT SOLAR PANEL REDUCTION AMOUNT
+    LEA SOLAR_PANEL_REDUCTION_MSG, A1
+    BSR PRINT_MSG_ALT
+    LEA SOLAR_PANEL_REDUCTION, A1
+    BSR PRINT_NUM
+    
+    *PROMPT USER FOR INPUT & OUTPUT MESSAGE
     LEA SHOP_INPUT_MSG, A1
     BSR PRINT_MSG
+     
     BSR INPUT_PROMPT
     
     *OPTION TO PLANT TREE
@@ -178,7 +232,7 @@ SHOP:
     CMP #3, D1
     BEQ BUILD_SOLAR_PANEL
     
-    *VALIDATION
+    *VALIDATION FOR INPUT
     CMP #4, D1
     BGT SHOP_VALIDATION
     
@@ -188,12 +242,27 @@ SHOP:
     *RTS IF PLAYER ENTERS 4
     RTS
     
+MONEY_VALIDATION:
+    LEA MONEY_VALIDATION_MSG, A1
+    BSR PRINT_MSG
+    BSR CLEAR_PROMPT
+    
+    BSR SHOP
+    
 **********************
 *PLANT TREE STRUCTURE*
 **********************
 PLANT_TREE:
     *PLANTS TREE STRUCTURE
     BSR CLEAR_SCREEN
+    
+    *VALIDATION THAT PLAYER HAS ENOUGH MONEY
+    LEA TREE_COST, A3
+    MOVE.W (A3),D4
+    LEA MONEY, A4
+    MOVE.W (A4), D5
+    CMP D4,D5
+    BLE MONEY_VALIDATION
     
     *OUTPUT ASCII ART
     LEA TREE_ART, A1
@@ -206,7 +275,7 @@ PLANT_TREE:
     *SUBTRACTING COST OF TREE
     LEA TREE_COST, A3
     MOVE.W (A3),D4
-    SUB D4, MONEY  
+    SUB D4, (MONEY)  
  
     *OUTPUT MESSAGE    
     LEA PLANT_TREE_MSG, A1
@@ -220,6 +289,14 @@ PLANT_TREE:
 BUILD_WINDMILL:
     BSR CLEAR_SCREEN
     
+    *VALIDATION THAT PLAYER HAS ENOUGH MONEY
+    LEA WINDMILL_COST, A3
+    MOVE.W (A3),D4
+    LEA MONEY, A4
+    MOVE.W (A4), D5
+    CMP D4,D5
+    BLE MONEY_VALIDATION
+    
     *OUTPUT ASCII ART
     LEA WINDMILL_ART, A1
     BSR PRINT_MSG
@@ -231,7 +308,7 @@ BUILD_WINDMILL:
     *SUBTRACTING COST OF WINDMILL
     LEA WINDMILL_COST, A3
     MOVE.W (A3),D4
-    SUB D4, MONEY   
+    SUB D4,(MONEY)   
     
     *OUTPUT MESSAGE 
     LEA BUILD_WINDMILL_MSG, A1
@@ -246,6 +323,14 @@ BUILD_WINDMILL:
 BUILD_SOLAR_PANEL: 
     BSR CLEAR_SCREEN
     
+    *VALIDATION THAT PLAYER HAS ENOUGH MONEY
+    LEA SOLAR_PANEL_COST, A3
+    MOVE.W (A3),D4
+    LEA MONEY, A4
+    MOVE.W (A4), D5
+    CMP D4,D5
+    BLE MONEY_VALIDATION
+    
     *OUTPUT ASCII ART
     LEA SOLAR_PANEL_ART, A1
     BSR PRINT_MSG
@@ -257,7 +342,7 @@ BUILD_SOLAR_PANEL:
     *SUBTRACTING COST OF SOLAR PANEL
     LEA SOLAR_PANEL_COST, A3
     MOVE.W (A3),D4
-    SUB D4, MONEY
+    SUB D4, (MONEY)
     
     *OUTPUT MESSAGE 
     LEA BUILD_SOLAR_PANEL_MSG, A1
@@ -866,15 +951,39 @@ TICK_DEADLINE_2_MSG DC.B '  ticks  left  to  reduce  carbon  emissions!'
 
 *SHOP MESSAGES
 
-SHOP_INPUT_MSG DC.B '::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::'
+SHOP_WELCOME_MSG DC.B '::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::'
+                 DC.B $0D,$0A
+                 DC.B ':::::::::::: Welcome to the shop!  What would you like to purchase? ::::::::::::'
+                 DC.B $0D,$0A
+                 DC.B '::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::',0
+
+SHOP_INPUT_MSG DC.B ':::::::::::::::::::::::::  Please  Select  an  Option  :::::::::::::::::::::::::'
                DC.B $0D,$0A
-               DC.B ':::::::::::: Welcome to the shop!  What would you like to purchase? ::::::::::::'
-               DC.B $0D,$0A
-               DC.B ':...............................................................................'
+               DC.B '................................................................................'
                DC.B $0D,$0A
                DC.B ':::  1  -  Tree  |  2  -  Windmill  |  3  -  Solar  Panel  |  4  -  Cancel  ::::'
                DC.B $0D,$0A
                DC.B '::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::',0
+               
+SHOP_INFO_MSG_1 DC.B '::::::::::::::::::::::::::::::  Structure  Costs  ::::::::::::::::::::::::::::::'
+                DC.B $0D,$0A
+                DC.B '::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::',0
+
+
+TREE_COST_MSG DC.B '::  Tree  Cost:  $',0
+         
+WINDMILL_COST_MSG DC.B '::  Windmill  Cost:  $',0
+            
+SOLAR_PANEL_COST_MSG DC.B '::  Solar  Panel  Cost:  $',0
+                     
+SHOP_INFO_MSG_2 DC.B '::::::::::::::::::::::::::::  Structure  Reduction  ::::::::::::::::::::::::::::',0
+                
+TREE_REDUCTION_MSG DC.B '::  Tree  Reduction:  ',0
+         
+WINDMILL_REDUCTION_MSG DC.B '::  Windmill  Reduction::  ',0
+            
+SOLAR_PANEL_REDUCTION_MSG DC.B '::  Solar  Panel  Reduction::  ',0
+
 
 PLANT_TREE_MSG  DC.B '::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::'
                 DC.B $0D,$0A
@@ -896,7 +1005,14 @@ BUILD_SOLAR_PANEL_MSG   DC.B '::::::::::::::::::::::::::::::::::::::::::::::::::
 
 MONEY_MSG DC.B '::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::'
           DC.B $0D,$0A
-          DC.B 'Money: $',0
+          DC.B '::  Money:  $',0
+          
+MONEY_VALIDATION_MSG DC.B '::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::'
+                     DC.B $0D,$0A
+                     DC.B ':::::  You  do  not  have  enough  money  to  purchase  this  structure!  ::::::'
+                     DC.B $0D,$0A 
+                     DC.B '::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::',0
+                     
 
 *INVENTORY MESSAGES
 
@@ -959,7 +1075,7 @@ FINAL_STATS_DEADLINE_1 DC.B ':::::::::::::::::::::::::::::::::::::::::::::::::::
                        DC.B $0D,$0A
                        DC.B '::  You  had:  ',0
 
-FINAL_STATS_DEADLINE_2 DC.B ' ticks  left  to  save  the  planet'
+FINAL_STATS_DEADLINE_2 DC.B '  ticks  left  to  save  the  planet'
                        DC.B $0D,$0A
                        DC.B '::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::',0
 
@@ -1012,6 +1128,9 @@ CARBON_AMOUNT DS.W 1
 MONEY DS.W 1
 
 TICK_COUNT DS.W 1
+
+
+MEMORY_PACKER_3 DC.B '::::::::::::::::::::::::::::::::::::::::::::::::::::::::',0
 
 TICK_DEADLINE DS.W 1
 
@@ -1530,16 +1649,7 @@ EXIT_ART
 *END PROGRAM*
 *************
 
-    END    START        
-
-
-
-
-
-
-
-
-
+    END    START
 
 
 
