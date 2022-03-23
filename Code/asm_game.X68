@@ -1,7 +1,15 @@
 *********************************
 *AUTHOR:        DENIS PERPELYUK *
 *STUDENT ID:    C00259076       *
+*DATE CREATED:  16/02/2022      *
 *********************************
+*PURPOSE:                       *
+*Assembly game that allows      *
+*player to fight against carbon *
+*emissions rising in the world  *
+*by purchasing structures       *
+*********************************
+
     ORG    $1000
         
 **************
@@ -1650,6 +1658,7 @@ EXIT_ART
 *************
 
     END    START
+
 
 
 
